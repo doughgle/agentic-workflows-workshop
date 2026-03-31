@@ -5,7 +5,6 @@ permissions:
       contents: read
       issues: read
       pull-requests: read
-engine: codex
 network: defaults
 tools:
   github:
