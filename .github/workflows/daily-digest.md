@@ -12,6 +12,7 @@ network: defaults
 tools:
   github:
     toolsets: [default]
+    min-integrity: none
 safe-outputs:
   create-issue:
     max: 1
@@ -27,6 +28,16 @@ Research recent activity from these sources only:
 1. GitHub Releases
 2. GitHub Packages (especially GHCR image/package updates)
 3. GitHub Issues
+
+Fetch efficiency and API hygiene:
+
+- When re-checking release metadata, use conditional requests with
+  `If-None-Match` (ETag) and `If-Modified-Since` to avoid repeated full
+  payload downloads.
+- If the API returns `304 Not Modified`, skip that repo for release
+  content processing in this run.
+- Prefer metadata-first retrieval and only fetch expanded content when a
+  release or issue passes the telemetry relevance gate.
 Apply strict editorial judgment: prefer depth over breadth. It is better
 to surface two excellent updates than ten weak ones.
 
@@ -39,9 +50,7 @@ shortlist of public repositories.
    workloads)
   - cilium/tetragon
   - pixie-io/pixie
-  - openlit/openlit
   - langfuse/langfuse
-  - Arize-ai/phoenix
   - inspektor-gadget/inspektor-gadget
   - iovisor/bcc
   - bpftrace/bpftrace
@@ -69,11 +78,19 @@ Scoring and filtering:
 - Drop any candidate that is not clearly relevant to one of the three
   topics.
 - Assign each item to exactly one best-fit topic.
+- Hard gate for Releases and Issues: include an item if and only if it
+  has direct telemetry implications for coding agents (for example:
+  instrumentation/tracing, metrics dimensions, span schema changes,
+  collector/exporter behavior, agent runtime observability, or GenAI
+  semantic convention changes).
+- Exclude non-telemetry releases/issues even if they are popular or
+  highly discussed.
 - Compute a GitHub signal `Score` from 0-100 using:
-  - impact of change (breaking/spec/runtime impact),
-  - discussion intensity (issue comments/reactions),
-  - adoption relevance for enterprise teams.
-- Keep only items with Score >= 70.
+  - telemetry specificity and operational impact for coding agents (50%),
+  - impact of change (breaking/spec/runtime impact) (30%),
+  - discussion intensity and adoption relevance for enterprise teams
+    (20%).
+- Keep only items with Score >= 75.
 
 Output rules:
 
