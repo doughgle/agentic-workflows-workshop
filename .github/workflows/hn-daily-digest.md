@@ -18,15 +18,43 @@ safe-outputs:
 
 # hn-daily-digest
 
-Create a daily digest workflow for professional developers, referencing
-relevant top Hacker News stories on technology that can be used today
-by large companies. Every weekday, fetch the top 30 stories from the
-Hacker News API (https://hacker-news.firebaseio.com/v0/topstories.json),
-filter to stories with a score above 100 that are about monitoring, snooping and observing AI agents. For each qualifying story include: the title, the
-URL, the score, the number of comments, and a one-sentence summary of
-why it is relevant to enterprise developers. Create a GitHub issue
-titled "HN Digest – <date>" with the results formatted as a Markdown
-table.
+Every weekday, fetch the top 30 stories from the Hacker News API
+(https://hacker-news.firebaseio.com/v0/topstories.json). Discard any
+story with a score below 150.
+
+From the remaining stories, keep only those that are genuinely relevant
+to one of the three focus topics below. Apply strict editorial judgment:
+prefer depth over breadth — it is better to surface two high-quality
+stories than ten loosely related ones. If a story could plausibly fit
+more than one topic, assign it to the best fit only.
+
+**Focus topics**
+
+1. **Observing AI agents** — runtime visibility into autonomous AI
+   systems: tracing, monitoring, snooping on tool-call chains, and
+   applying eBPF / kernel-level instrumentation to agent workloads.
+
+2. **Telemetry for coding agents** — observability updates, usage
+   metrics, tracing integrations, and operational changes for the
+   following tools specifically: GitHub Copilot, Claude Code, Gemini
+   CLI, OpenAI Codex, and OpenClaw (a self-hosted gateway that bridges
+   messaging apps such as WhatsApp/Telegram/Discord/iMessage to AI
+   coding agents like Pi —  https://docs.openclaw.ai/).
+
+3. **OpenTelemetry standards** — specification changes, SDKs, collector
+   updates, and community discussion around OpenTelemetry, with emphasis
+   on the Semantic Conventions for GenAI
+   (https://opentelemetry.io/docs/specs/semconv/gen-ai/).
+
+**Output rules**
+
+- If no story clears the relevance bar after filtering, do nothing —
+  do not create a GitHub issue.
+- Otherwise, create a single GitHub issue titled "HN Digest – <date>"
+  containing one Markdown table per topic that has qualifying stories.
+  Each table row must include: Title (linked), Score, Comments, and a
+  one-sentence note on why the story is actionable for enterprise
+  developers building or operating AI systems.
 
 <!--
 ## TODO: Customize this workflow
