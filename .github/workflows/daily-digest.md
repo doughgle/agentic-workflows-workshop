@@ -106,4 +106,4 @@ Output rules:
     operating AI systems)
 - `Comments` should reflect discussion count for issues and best
   available discussion count for releases/packages (use 0 when none).
-- Mention me (@doughgle on Github).
+- Mention me (@doughgle) on Github. Do NOT quote the mention tag.
