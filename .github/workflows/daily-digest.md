@@ -2,9 +2,9 @@
 on:
   schedule: daily
 permissions:
-      contents: read
-      issues: read
-      pull-requests: read
+  contents: read
+  issues: read
+  pull-requests: read
 engine:
   id: copilot
   model: gpt-5-mini
@@ -15,6 +15,8 @@ tools:
     min-integrity: none
 safe-outputs:
   create-issue:
+    max: 1
+  add-comment:
     max: 1
 ---
 
@@ -50,11 +52,13 @@ shortlist of public repositories.
    workloads)
   - cilium/tetragon
   - pixie-io/pixie
+  - Arize-ai/phoenix
   - langfuse/langfuse
   - inspektor-gadget/inspektor-gadget
   - iovisor/bcc
   - bpftrace/bpftrace
   - open-telemetry/opentelemetry-ebpf-instrumentation
+  - open-telemetry/opentelemetry-ebpf-profiler
   - alex-ilgayev/MCPSpy
 
 2. **Telemetry updates for coding agents** (GitHub Copilot, Claude Code,
@@ -73,9 +77,15 @@ shortlist of public repositories.
   - open-telemetry/opentelemetry-collector-contrib
   - open-telemetry/opentelemetry-collector
 
+4. **Observability Platform Tools**
+  - grafana/docker-otel-lgtm
+  - grafana/oats
+  - grafana/mcp-grafana
+
+
 Scoring and filtering:
 
-- Drop any candidate that is not clearly relevant to one of the three
+- Drop any candidate that is not clearly relevant to one of the four
   topics.
 - Assign each item to exactly one best-fit topic.
 - Hard gate for Releases and Issues: include an item if and only if it
@@ -100,10 +110,20 @@ Output rules:
 - Use one Markdown table per topic that has qualifying items.
 - Keep the same table format for each row:
   - Title (linked)
+  - Repository
   - Score
   - Comments
-  - Why actionable (one sentence for enterprise developers building or
-    operating AI systems)
+  - Summary
+  - Value Proposition 
+      - What does it enable people to do?
+      - What's the value in terms of time cost and quality? Quantify it where possible e.g. startup time reduced from 60s to 5s
+  - Suggested actions to get the proposed value
+- Use this exact table structure for each topic section:
+
+  | Title | Repository | Score | Comments | Summary | Value Proposition | Suggested actions to get the proposed value |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | [Example: GenAI semconv adds agent tool latency dimensions](https://github.com/open-telemetry/semantic-conventions/issues/0000) | open-telemetry/semantic-conventions | 88 | 12 | Adds explicit dimensions for coding-agent tool latency to improve cross-vendor observability. | Enables teams to compare tool latency by model, tool, and runtime path; can reduce root-cause time from 45 min to 10 min and improve alert precision by ~30%. | 1) Update collector transforms and dashboards to new dimensions. 2) Add SLO panels for p95 tool latency. 3) Validate cardinality impact in staging. |
 - `Comments` should reflect discussion count for issues and best
   available discussion count for releases/packages (use 0 when none).
-- Mention me (@doughgle) on Github. Do NOT quote the mention tag.
+- After creating the issue, add exactly one issue comment containing a plain-text mention: @doughgle
+- Do not wrap the mention in quotes, backticks, or code blocks.
