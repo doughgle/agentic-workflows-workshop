@@ -18,6 +18,7 @@ safe-outputs:
     max: 1
   add-comment:
     max: 1
+    target: "*"
 ---
 
 # daily-digest
@@ -122,8 +123,11 @@ Output rules:
 
   | Title | Repository | Score | Comments | Summary | Value Proposition | Suggested actions to get the proposed value |
   | --- | --- | --- | --- | --- | --- | --- |
-  | [Example: GenAI semconv adds agent tool latency dimensions](https://github.com/open-telemetry/semantic-conventions/issues/0000) | open-telemetry/semantic-conventions | 88 | 12 | Adds explicit dimensions for coding-agent tool latency to improve cross-vendor observability. | Enables teams to compare tool latency by model, tool, and runtime path; can reduce root-cause time from 45 min to 10 min and improve alert precision by ~30%. | 1) Update collector transforms and dashboards to new dimensions. 2) Add SLO panels for p95 tool latency. 3) Validate cardinality impact in staging. |
+  | [Example: GenAI semconv adds agent tool latency dimensions](https://github.com/open-telemetry/semantic-conventions/issues/0000) | open-telemetry/semantic-conventions | 88 | 12 | Adds explicit dimensions for coding-agent tool latency to improve cross-vendor observability. | Enables cross-vendor tool latency comparison; reduces root-cause time from ~45 min to ~10 min. | 1) Update collector transforms and dashboards to new dimensions. 2) Add SLO panels for p95 tool latency. 3) Validate cardinality impact in staging. |
 - `Comments` should reflect discussion count for issues and best
   available discussion count for releases/packages (use 0 when none).
+- Keep `Summary` and `Value Proposition` cells to 1–2 sentences each. Both columns must be written to roughly the same length so the table renders at a consistent column width on mobile without horizontal scrolling. Do not truncate meaning to match length; instead write each cell with the same level of detail and density as the other.
 - After creating the issue, add exactly one issue comment containing a plain-text mention: @doughgle
+- Because this workflow runs on schedule/dispatch (no triggering issue), for `add_comment` you MUST set `issue_number` to the issue number returned by the same-run `create_issue` output.
+- Do NOT provide `item_number` for this workflow.
 - Do not wrap the mention in quotes, backticks, or code blocks.
