@@ -1,0 +1,4 @@
+config:
+  default: true
+customRules:
+  - "./.markdownlint-cli2.mjs"

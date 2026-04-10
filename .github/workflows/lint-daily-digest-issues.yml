@@ -1,0 +1,25 @@
+name: lint-daily-digest-issues
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  markdownlint:
+    if: startsWith(github.event.issue.title, 'GitHub Digest - ')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Write issue body to file
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            fs.writeFileSync('daily-digest-issue.md', context.payload.issue.body || '', 'utf8');
+
+      - name: Run markdownlint-cli2
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: daily-digest-issue.md
