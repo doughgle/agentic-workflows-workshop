@@ -119,6 +119,10 @@ Output rules:
       - What does it enable people to do?
       - What's the value in terms of time cost and quality? Quantify it where possible e.g. startup time reduced from 60s to 5s
   - Suggested actions to get the proposed value
+- Table formatting guardrails to avoid broken rendering on GitHub:
+  - Do not insert blank lines between the header, separator, or any data rows. Each row must immediately follow the previous line, all starting with `|`.
+  - Keep the table as one uninterrupted block; add blank lines only before or after the table, never inside it.
+  - Before returning, scan each topic table and remove any accidental blank lines so every row renders inside the table.
 - Use this exact table structure for each topic section:
 
   | Title | Repository | Score | Comments | Summary | Value Proposition | Suggested actions to get the proposed value |
