@@ -1,0 +1,5 @@
+config:
+  default: true
+  MD058: true
+customRules:
+  - "./.markdownlint-cli2.mjs"
