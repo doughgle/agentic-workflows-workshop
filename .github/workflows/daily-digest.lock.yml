@@ -838,6 +838,14 @@ jobs:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .markdownlint-cli2.yaml
+            .markdownlint-cli2.mjs
+          sparse-checkout-cone-mode: true
       - name: Download agent output artifact
         id: download-agent-output
         continue-on-error: true
@@ -1135,6 +1143,78 @@ jobs:
           GH_HOST="${GITHUB_SERVER_URL#https://}"
           GH_HOST="${GH_HOST#http://}"
           echo "GH_HOST=${GH_HOST}" >> "$GITHUB_ENV"
+      - name: Extract digest issue body
+        id: extract-digest-body
+        if: steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const workspace = process.env.GITHUB_WORKSPACE || process.cwd();
+          const outPath = path.join(workspace, 'digest-body.md');
+
+          const candidates = [];
+          const outputsPath = process.env.GITHUB_OUTPUT;
+          const maybeRead = (p) => {
+            try { return fs.readFileSync(p, 'utf8'); } catch (_) { return null; }
+          };
+
+          const collectBody = (obj) => {
+            if (!obj || typeof obj !== 'object') return;
+            const body =
+              obj.body ??
+              obj.params?.body ??
+              obj.args?.body ??
+              obj.data?.body ??
+              obj.request?.body ??
+              obj.input?.body;
+            if (body && typeof body === 'string') candidates.push(body);
+          };
+
+          // Parse agent_output.json
+          const agentRaw = maybeRead('/tmp/gh-aw/agent_output.json');
+          if (agentRaw) {
+            try {
+              const json = JSON.parse(agentRaw);
+              if (Array.isArray(json.items)) {
+                json.items.forEach((item) => collectBody(item));
+              }
+              collectBody(json);
+            } catch {}
+          }
+
+          // Parse safeoutputs.jsonl if present
+          const safeRaw = maybeRead('/tmp/gh-aw/safeoutputs.jsonl');
+          if (safeRaw) {
+            safeRaw.split('\n').forEach((line) => {
+              if (!line.trim()) return;
+              try {
+                const obj = JSON.parse(line);
+                collectBody(obj);
+              } catch {}
+            });
+          }
+
+          if (!candidates.length) {
+            console.log('No issue body found to lint.');
+            process.exit(0);
+          }
+
+          const body = candidates.find(Boolean);
+          fs.writeFileSync(outPath, body, 'utf8');
+          console.log(`Wrote digest body for linting to ${outPath}`);
+          if (outputsPath) {
+            fs.appendFileSync(outputsPath, `has_body=true\n`);
+          }
+          NODE
+      - name: Lint digest body
+        if: steps.extract-digest-body.outputs.has_body == 'true'
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: digest-body.md
       - name: Process Safe Outputs
         id: process_safe_outputs
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
@@ -1158,4 +1238,3 @@ jobs:
           name: safe-output-items
           path: /tmp/gh-aw/safe-output-items.jsonl
           if-no-files-found: ignore
-
