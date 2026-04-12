@@ -124,6 +124,8 @@ Output rules:
   | Title | Repository | Score | Comments | Summary | Value Proposition | Suggested actions to get the proposed value |
   | --- | --- | --- | --- | --- | --- | --- |
   | [Example: GenAI semconv adds agent tool latency dimensions](https://github.com/open-telemetry/semantic-conventions/issues/0000) | open-telemetry/semantic-conventions | 88 | 12 | Adds explicit dimensions for coding-agent tool latency to improve cross-vendor observability. | Enables cross-vendor tool latency comparison; reduces root-cause time from ~45 min to ~10 min. | 1) Update collector transforms and dashboards to new dimensions. 2) Add SLO panels for p95 tool latency. 3) Validate cardinality impact in staging. |
+  | Example: New GHCR image release for eBPF observability agent | cilium/tetragon | 82 | 5 | New release of Tetragon with improved eBPF-based observability features for AI agent workloads. | Enables deeper visibility into AI agent behavior with lower overhead; reduces troubleshooting time by ~30%. | 1) Test new release in staging. 2) Update production deployment to new version. 3) Monitor for improvements in observability and troubleshooting efficiency. |
+
 - `Comments` should reflect discussion count for issues and best
   available discussion count for releases/packages (use 0 when none).
 - Keep `Summary` and `Value Proposition` cells to 1–2 sentences each. Both columns must be written to roughly the same length so the table renders at a consistent column width on mobile without horizontal scrolling. Do not truncate meaning to match length; instead write each cell with the same level of detail and density as the other.
