@@ -82,7 +82,7 @@ shortlist of public repositories.
   - grafana/docker-otel-lgtm
   - grafana/oats
   - grafana/mcp-grafana
-
+  - grafana/grafanactl
 
 Scoring and filtering:
 
