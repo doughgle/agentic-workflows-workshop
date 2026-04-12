@@ -25,6 +25,10 @@ safe-outputs:
 
 Create a daily high-signal digest from public GitHub repositories only.
 Do not use non-GitHub sources.
+Use GitHub MCP tools for GitHub repository data collection.
+Do not fetch `api.github.com`, GitHub HTML pages, or other GitHub-hosted
+content over raw HTTP when the same data is available through GitHub MCP
+tools.
 
 Research recent activity from these sources only:
 
@@ -41,6 +45,8 @@ Fetch efficiency and API hygiene:
   content processing in this run.
 - Prefer metadata-first retrieval and only fetch expanded content when a
   release or issue passes the telemetry relevance gate.
+- If a GitHub MCP request fails for a repository, skip that repository and
+  continue; do not fall back to raw HTTP requests against GitHub APIs.
 Apply strict editorial judgment: prefer depth over breadth. It is better
 to surface two excellent updates than ten weak ones.
 
@@ -129,6 +135,11 @@ Output rules:
 - `Comments` should reflect discussion count for issues and best
   available discussion count for releases/packages (use 0 when none).
 - Keep `Summary` and `Value Proposition` cells to 1–2 sentences each. Both columns must be written to roughly the same length so the table renders at a consistent column width on mobile without horizontal scrolling. Do not truncate meaning to match length; instead write each cell with the same level of detail and density as the other.
+- When publishing, call the safe-output tools directly by name:
+  `create_issue`, `add_comment`, and `noop`. Do not refer to them through
+  a `functions.` namespace or any other wrapper.
+- If no items qualify, call `noop` with a concise explanation instead of
+  drafting issue content.
 - After creating the issue, add exactly one issue comment containing a plain-text mention: @doughgle
 - Because this workflow runs on schedule/dispatch (no triggering issue), for `add_comment` you MUST set `issue_number` to the issue number returned by the same-run `create_issue` output.
 - Do NOT provide `item_number` for this workflow.
