@@ -190,21 +190,21 @@ jobs:
           for f in data_files:
               try:
                   with open(f) as fp:
-                raw_repo = json.load(fp)
-                releases = [
-                  compact_release(release)
-                  for release in raw_repo.get('releases', [])
-                ]
-                issues = [
-                  compact_issue(issue)
-                  for issue in raw_repo.get('issues', [])
-                ]
-                all_repos.append({
-                  'repo': raw_repo.get('repo'),
-                  'category': raw_repo.get('category'),
-                  'releases': releases,
-                  'issues': issues,
-                })
+                      raw_repo = json.load(fp)
+                      releases = [
+                          compact_release(release)
+                          for release in raw_repo.get('releases', [])
+                      ]
+                      issues = [
+                          compact_issue(issue)
+                          for issue in raw_repo.get('issues', [])
+                      ]
+                      all_repos.append({
+                          'repo': raw_repo.get('repo'),
+                          'category': raw_repo.get('category'),
+                          'releases': releases,
+                          'issues': issues,
+                      })
               except Exception:
                   pass
 
@@ -224,36 +224,36 @@ jobs:
               for r in all_repos
           )
 
-            summary_repos = []
-            for repo in all_repos:
+          summary_repos = []
+          for repo in all_repos:
               summary_repos.append({
-                'repo': repo.get('repo'),
-                'category': repo.get('category'),
-                'releaseCount': len(repo.get('releases', [])),
-                'issueCount': len(repo.get('issues', [])),
-                'releases': [
-                  {
-                    'name': release.get('name'),
-                    'tagName': release.get('tagName'),
-                    'publishedAt': release.get('publishedAt'),
-                    'url': release.get('url'),
-                    'bodyLength': release.get('bodyLength'),
-                    'bodyTruncated': release.get('bodyTruncated'),
-                  }
-                  for release in repo.get('releases', [])
-                ],
-                'issues': [
-                  {
-                    'number': issue.get('number'),
-                    'title': issue.get('title'),
-                    'createdAt': issue.get('createdAt'),
-                    'comments': issue.get('comments'),
-                    'url': issue.get('url'),
-                    'bodyLength': issue.get('bodyLength'),
-                    'bodyTruncated': issue.get('bodyTruncated'),
-                  }
-                  for issue in repo.get('issues', [])
-                ],
+                  'repo': repo.get('repo'),
+                  'category': repo.get('category'),
+                  'releaseCount': len(repo.get('releases', [])),
+                  'issueCount': len(repo.get('issues', [])),
+                  'releases': [
+                      {
+                          'name': release.get('name'),
+                          'tagName': release.get('tagName'),
+                          'publishedAt': release.get('publishedAt'),
+                          'url': release.get('url'),
+                          'bodyLength': release.get('bodyLength'),
+                          'bodyTruncated': release.get('bodyTruncated'),
+                      }
+                      for release in repo.get('releases', [])
+                  ],
+                  'issues': [
+                      {
+                          'number': issue.get('number'),
+                          'title': issue.get('title'),
+                          'createdAt': issue.get('createdAt'),
+                          'comments': issue.get('comments'),
+                          'url': issue.get('url'),
+                          'bodyLength': issue.get('bodyLength'),
+                          'bodyTruncated': issue.get('bodyTruncated'),
+                      }
+                      for issue in repo.get('issues', [])
+                  ],
               })
 
           cache = {
@@ -262,13 +262,13 @@ jobs:
               'failed': failures,
               'repos': all_repos,
           }
-            summary = {
+          summary = {
               'scanned': scanned,
               'total': total,
               'failed': failures,
               'itemsFound': items_found,
               'repos': summary_repos,
-            }
+          }
           metrics = {
               'scanned': scanned,
               'total': total,
@@ -278,25 +278,25 @@ jobs:
 
           with open('/tmp/prefetch/daily-digest-cache.json', 'w') as f:
               json.dump(cache, f)
-            with open('/tmp/prefetch/daily-digest-summary.json', 'w') as f:
+          with open('/tmp/prefetch/daily-digest-summary.json', 'w') as f:
               json.dump(summary, f)
 
-            metrics['cache_bytes'] = os.path.getsize('/tmp/prefetch/daily-digest-cache.json')
-            metrics['summary_bytes'] = os.path.getsize('/tmp/prefetch/daily-digest-summary.json')
-            metrics['repos_with_activity'] = sum(
+          metrics['cache_bytes'] = os.path.getsize('/tmp/prefetch/daily-digest-cache.json')
+          metrics['summary_bytes'] = os.path.getsize('/tmp/prefetch/daily-digest-summary.json')
+          metrics['repos_with_activity'] = sum(
               1
               for repo in summary_repos
               if repo['releaseCount'] or repo['issueCount']
-            )
+          )
 
           with open('/tmp/prefetch/daily-digest-metrics.json', 'w') as f:
               json.dump(metrics, f)
 
-            print(
+          print(
               f"Scanned {scanned}/{total} repos, {len(failures)} failed, "
               f"{items_found} items found, cache={metrics['cache_bytes']} bytes, "
               f"summary={metrics['summary_bytes']} bytes"
-            )
+          )
           PYEOF
 
       - name: Upload prefetch artifact
