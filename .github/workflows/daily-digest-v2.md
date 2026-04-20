@@ -23,6 +23,8 @@ tools:
     toolsets: [default]
     min-integrity: none
 safe-outputs:
+  mentions:
+    allowed: [doughgle]
   create-issue:
     max: 1
   add-comment:
