@@ -1,4 +1,4 @@
-# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"7ec40f869e2c1880cc25d7959c5c0e4b5382d384862eef675662a2f73cd5bcf1","compiler_version":"v0.68.1","strict":true,"agent_id":"copilot","agent_model":"gpt-5-mini"}
+# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"054c0947a1b370afe81e82c348fed64e301b7493b39fd1b445ecfa74bb4f625f","compiler_version":"v0.68.1","strict":true,"agent_id":"copilot","agent_model":"gpt-5-mini"}
 # gh-aw-manifest: {"version":1,"secrets":["COPILOT_GITHUB_TOKEN","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/checkout","sha":"de0fac2e4500dabe0009e67214ff5f5447ce83dd","version":"v6.0.2"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/download-artifact","sha":"d3f86a106a0bac45b974a628896c90dbdf5c8093","version":"v4"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9"},{"repo":"actions/upload-artifact","sha":"bbbca2ddaa5d8feaa63e36b76fdaad77386f024f","version":"v7"},{"repo":"actions/upload-artifact","sha":"ea165f8d65b6e75b540449e92b4886f43607fa02","version":"v4"},{"repo":"github/gh-aw-actions/setup","sha":"2fe53acc038ba01c3bbdc767d4b25df31ca5bdfc","version":"v0.68.1"}]}
 #    ___                   _   _      
 #   / _ \                 | | (_)     
@@ -331,7 +331,7 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: daily-digest-prefetch
-          path: /tmp/gh-aw/agent/
+          path: ${{ github.workspace }}/.aw/prefetch
 
       - name: Configure Git credentials
         env:
@@ -1129,6 +1129,7 @@ jobs:
 
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PREFETCH_DIR: ${{ runner.temp }}/daily-digest-prefetch
     steps:
       - name: Configure GH_HOST for enterprise compatibility
         id: ghes-host-config
@@ -1140,7 +1141,7 @@ jobs:
           GH_HOST="${GH_HOST#http://}"
           echo "GH_HOST=${GH_HOST}" >> "$GITHUB_ENV"
       - name: Create output directory
-        run: mkdir -p /tmp/prefetch
+        run: mkdir -p "${PREFETCH_DIR}"
       - name: Set time window
         run: echo "SINCE=$(date -u -d '24 hours ago' '+%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
       - name: Fetch Category 1 — Observing AI agents (10 repos)
@@ -1158,7 +1159,7 @@ jobs:
             "open-telemetry/opentelemetry-ebpf-profiler" \
             "alex-ilgayev/MCPSpy"
           do
-            OUT="/tmp/prefetch/$(echo "${REPO}" | tr '/' '_').json"
+            OUT="${PREFETCH_DIR}/$(echo "${REPO}" | tr '/' '_').json"
             RELEASES=$(gh api "repos/${REPO}/releases?per_page=20" \
               --jq "[.[] | select(.published_at >= \"${SINCE}\")]" 2>/dev/null) \
               || RELEASES="[]"
@@ -1168,7 +1169,7 @@ jobs:
               || ISSUES="[]"
             printf '%s' "{\"repo\":\"${REPO}\",\"category\":1,\"releases\":${RELEASES},\"issues\":${ISSUES}}" \
               > "${OUT}" \
-              || echo "FAILED:${REPO}" >> /tmp/prefetch/failures.log
+              || echo "FAILED:${REPO}" >> "${PREFETCH_DIR}/failures.log"
           done
       - name: Fetch Category 2 — Telemetry for coding agents (6 repos)
         run: |
@@ -1181,7 +1182,7 @@ jobs:
             "openai/codex" \
             "openclaw/openclaw"
           do
-            OUT="/tmp/prefetch/$(echo "${REPO}" | tr '/' '_').json"
+            OUT="${PREFETCH_DIR}/$(echo "${REPO}" | tr '/' '_').json"
             RELEASES=$(gh api "repos/${REPO}/releases?per_page=20" \
               --jq "[.[] | select(.published_at >= \"${SINCE}\")]" 2>/dev/null) \
               || RELEASES="[]"
@@ -1191,7 +1192,7 @@ jobs:
               || ISSUES="[]"
             printf '%s' "{\"repo\":\"${REPO}\",\"category\":2,\"releases\":${RELEASES},\"issues\":${ISSUES}}" \
               > "${OUT}" \
-              || echo "FAILED:${REPO}" >> /tmp/prefetch/failures.log
+              || echo "FAILED:${REPO}" >> "${PREFETCH_DIR}/failures.log"
           done
       - name: Fetch Category 3 — OpenTelemetry standards (4 repos)
         run: |
@@ -1202,7 +1203,7 @@ jobs:
             "open-telemetry/opentelemetry-collector-contrib" \
             "open-telemetry/opentelemetry-collector"
           do
-            OUT="/tmp/prefetch/$(echo "${REPO}" | tr '/' '_').json"
+            OUT="${PREFETCH_DIR}/$(echo "${REPO}" | tr '/' '_').json"
             RELEASES=$(gh api "repos/${REPO}/releases?per_page=20" \
               --jq "[.[] | select(.published_at >= \"${SINCE}\")]" 2>/dev/null) \
               || RELEASES="[]"
@@ -1212,7 +1213,7 @@ jobs:
               || ISSUES="[]"
             printf '%s' "{\"repo\":\"${REPO}\",\"category\":3,\"releases\":${RELEASES},\"issues\":${ISSUES}}" \
               > "${OUT}" \
-              || echo "FAILED:${REPO}" >> /tmp/prefetch/failures.log
+              || echo "FAILED:${REPO}" >> "${PREFETCH_DIR}/failures.log"
           done
       - name: Fetch Category 4 — Observability Platform Tools (4 repos)
         run: |
@@ -1223,7 +1224,7 @@ jobs:
             "grafana/mcp-grafana" \
             "grafana/grafanactl"
           do
-            OUT="/tmp/prefetch/$(echo "${REPO}" | tr '/' '_').json"
+            OUT="${PREFETCH_DIR}/$(echo "${REPO}" | tr '/' '_').json"
             RELEASES=$(gh api "repos/${REPO}/releases?per_page=20" \
               --jq "[.[] | select(.published_at >= \"${SINCE}\")]" 2>/dev/null) \
               || RELEASES="[]"
@@ -1233,7 +1234,7 @@ jobs:
               || ISSUES="[]"
             printf '%s' "{\"repo\":\"${REPO}\",\"category\":4,\"releases\":${RELEASES},\"issues\":${ISSUES}}" \
               > "${OUT}" \
-              || echo "FAILED:${REPO}" >> /tmp/prefetch/failures.log
+              || echo "FAILED:${REPO}" >> "${PREFETCH_DIR}/failures.log"
           done
       - name: Aggregate prefetch data
         run: |
@@ -1282,7 +1283,8 @@ jobs:
               'url': issue.get('url') or '',
             }
 
-          data_files = sorted(glob.glob('/tmp/prefetch/*.json'))
+          prefetch_dir = os.environ['PREFETCH_DIR']
+          data_files = sorted(glob.glob(os.path.join(prefetch_dir, '*.json')))
           all_repos = []
           for f in data_files:
               try:
@@ -1306,7 +1308,7 @@ jobs:
                   pass
 
           failures = []
-          failures_log = '/tmp/prefetch/failures.log'
+          failures_log = os.path.join(prefetch_dir, 'failures.log')
           if os.path.exists(failures_log):
               with open(failures_log) as fp:
                   for line in fp:
@@ -1373,20 +1375,24 @@ jobs:
               'items_found': items_found,
           }
 
-          with open('/tmp/prefetch/daily-digest-cache.json', 'w') as f:
+          cache_path = os.path.join(prefetch_dir, 'daily-digest-cache.json')
+          summary_path = os.path.join(prefetch_dir, 'daily-digest-summary.json')
+          metrics_path = os.path.join(prefetch_dir, 'daily-digest-metrics.json')
+
+          with open(cache_path, 'w') as f:
               json.dump(cache, f)
-          with open('/tmp/prefetch/daily-digest-summary.json', 'w') as f:
+          with open(summary_path, 'w') as f:
               json.dump(summary, f)
 
-          metrics['cache_bytes'] = os.path.getsize('/tmp/prefetch/daily-digest-cache.json')
-          metrics['summary_bytes'] = os.path.getsize('/tmp/prefetch/daily-digest-summary.json')
+          metrics['cache_bytes'] = os.path.getsize(cache_path)
+          metrics['summary_bytes'] = os.path.getsize(summary_path)
           metrics['repos_with_activity'] = sum(
               1
               for repo in summary_repos
               if repo['releaseCount'] or repo['issueCount']
           )
 
-          with open('/tmp/prefetch/daily-digest-metrics.json', 'w') as f:
+          with open(metrics_path, 'w') as f:
               json.dump(metrics, f)
 
           print(
@@ -1399,7 +1405,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: daily-digest-prefetch
-          path: /tmp/prefetch/
+          path: ${{ env.PREFETCH_DIR }}/
           retention-days: 1
 
   safe_outputs:
@@ -1487,4 +1493,3 @@ jobs:
           name: safe-outputs-items
           path: /tmp/gh-aw/safe-output-items.jsonl
           if-no-files-found: ignore
-
