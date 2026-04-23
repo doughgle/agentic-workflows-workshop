@@ -35,9 +35,10 @@ jobs:
       contents: read
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PREFETCH_DIR: ${{ runner.temp }}/daily-digest-prefetch
     steps:
       - name: Create output directory
-        run: mkdir -p /tmp/prefetch
+        run: mkdir -p "${PREFETCH_DIR}"
 
       - name: Set time window
         run: echo "SINCE=$(date -u -d '24 hours ago' '+%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
@@ -57,7 +58,7 @@ jobs:
             "open-telemetry/opentelemetry-ebpf-profiler" \
             "alex-ilgayev/MCPSpy"
           do
-            OUT="/tmp/prefetch/$(echo "${REPO}" | tr '/' '_').json"
+            OUT="${PREFETCH_DIR}/$(echo "${REPO}" | tr '/' '_').json"
             RELEASES=$(gh api "repos/${REPO}/releases?per_page=20" \
               --jq "[.[] | select(.published_at >= \"${SINCE}\")]" 2>/dev/null) \
               || RELEASES="[]"
@@ -67,7 +68,7 @@ jobs:
               || ISSUES="[]"
             printf '%s' "{\"repo\":\"${REPO}\",\"category\":1,\"releases\":${RELEASES},\"issues\":${ISSUES}}" \
               > "${OUT}" \
-              || echo "FAILED:${REPO}" >> /tmp/prefetch/failures.log
+              || echo "FAILED:${REPO}" >> "${PREFETCH_DIR}/failures.log"
           done
 
       - name: Fetch Category 2 — Telemetry for coding agents (6 repos)
@@ -81,7 +82,7 @@ jobs:
             "openai/codex" \
             "openclaw/openclaw"
           do
-            OUT="/tmp/prefetch/$(echo "${REPO}" | tr '/' '_').json"
+            OUT="${PREFETCH_DIR}/$(echo "${REPO}" | tr '/' '_').json"
             RELEASES=$(gh api "repos/${REPO}/releases?per_page=20" \
               --jq "[.[] | select(.published_at >= \"${SINCE}\")]" 2>/dev/null) \
               || RELEASES="[]"
@@ -91,7 +92,7 @@ jobs:
               || ISSUES="[]"
             printf '%s' "{\"repo\":\"${REPO}\",\"category\":2,\"releases\":${RELEASES},\"issues\":${ISSUES}}" \
               > "${OUT}" \
-              || echo "FAILED:${REPO}" >> /tmp/prefetch/failures.log
+              || echo "FAILED:${REPO}" >> "${PREFETCH_DIR}/failures.log"
           done
 
       - name: Fetch Category 3 — OpenTelemetry standards (4 repos)
@@ -103,7 +104,7 @@ jobs:
             "open-telemetry/opentelemetry-collector-contrib" \
             "open-telemetry/opentelemetry-collector"
           do
-            OUT="/tmp/prefetch/$(echo "${REPO}" | tr '/' '_').json"
+            OUT="${PREFETCH_DIR}/$(echo "${REPO}" | tr '/' '_').json"
             RELEASES=$(gh api "repos/${REPO}/releases?per_page=20" \
               --jq "[.[] | select(.published_at >= \"${SINCE}\")]" 2>/dev/null) \
               || RELEASES="[]"
@@ -113,7 +114,7 @@ jobs:
               || ISSUES="[]"
             printf '%s' "{\"repo\":\"${REPO}\",\"category\":3,\"releases\":${RELEASES},\"issues\":${ISSUES}}" \
               > "${OUT}" \
-              || echo "FAILED:${REPO}" >> /tmp/prefetch/failures.log
+              || echo "FAILED:${REPO}" >> "${PREFETCH_DIR}/failures.log"
           done
 
       - name: Fetch Category 4 — Observability Platform Tools (4 repos)
@@ -125,7 +126,7 @@ jobs:
             "grafana/mcp-grafana" \
             "grafana/grafanactl"
           do
-            OUT="/tmp/prefetch/$(echo "${REPO}" | tr '/' '_').json"
+            OUT="${PREFETCH_DIR}/$(echo "${REPO}" | tr '/' '_').json"
             RELEASES=$(gh api "repos/${REPO}/releases?per_page=20" \
               --jq "[.[] | select(.published_at >= \"${SINCE}\")]" 2>/dev/null) \
               || RELEASES="[]"
@@ -135,7 +136,7 @@ jobs:
               || ISSUES="[]"
             printf '%s' "{\"repo\":\"${REPO}\",\"category\":4,\"releases\":${RELEASES},\"issues\":${ISSUES}}" \
               > "${OUT}" \
-              || echo "FAILED:${REPO}" >> /tmp/prefetch/failures.log
+              || echo "FAILED:${REPO}" >> "${PREFETCH_DIR}/failures.log"
           done
 
       - name: Aggregate prefetch data
@@ -185,7 +186,8 @@ jobs:
               'url': issue.get('url') or '',
             }
 
-          data_files = sorted(glob.glob('/tmp/prefetch/*.json'))
+          prefetch_dir = os.environ['PREFETCH_DIR']
+          data_files = sorted(glob.glob(os.path.join(prefetch_dir, '*.json')))
           all_repos = []
           for f in data_files:
               try:
@@ -209,7 +211,7 @@ jobs:
                   pass
 
           failures = []
-          failures_log = '/tmp/prefetch/failures.log'
+          failures_log = os.path.join(prefetch_dir, 'failures.log')
           if os.path.exists(failures_log):
               with open(failures_log) as fp:
                   for line in fp:
@@ -276,20 +278,24 @@ jobs:
               'items_found': items_found,
           }
 
-          with open('/tmp/prefetch/daily-digest-cache.json', 'w') as f:
+          cache_path = os.path.join(prefetch_dir, 'daily-digest-cache.json')
+          summary_path = os.path.join(prefetch_dir, 'daily-digest-summary.json')
+          metrics_path = os.path.join(prefetch_dir, 'daily-digest-metrics.json')
+
+          with open(cache_path, 'w') as f:
               json.dump(cache, f)
-          with open('/tmp/prefetch/daily-digest-summary.json', 'w') as f:
+          with open(summary_path, 'w') as f:
               json.dump(summary, f)
 
-          metrics['cache_bytes'] = os.path.getsize('/tmp/prefetch/daily-digest-cache.json')
-          metrics['summary_bytes'] = os.path.getsize('/tmp/prefetch/daily-digest-summary.json')
+          metrics['cache_bytes'] = os.path.getsize(cache_path)
+          metrics['summary_bytes'] = os.path.getsize(summary_path)
           metrics['repos_with_activity'] = sum(
               1
               for repo in summary_repos
               if repo['releaseCount'] or repo['issueCount']
           )
 
-          with open('/tmp/prefetch/daily-digest-metrics.json', 'w') as f:
+          with open(metrics_path, 'w') as f:
               json.dump(metrics, f)
 
           print(
@@ -303,7 +309,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: daily-digest-prefetch
-          path: /tmp/prefetch/
+          path: ${{ env.PREFETCH_DIR }}/
           retention-days: 1
 
 steps:
@@ -311,7 +317,7 @@ steps:
     uses: actions/download-artifact@v4
     with:
       name: daily-digest-prefetch
-      path: /tmp/gh-aw/agent/
+      path: ${{ github.workspace }}/.aw/prefetch
 ---
 
 # daily-digest-v2
@@ -321,16 +327,16 @@ Do not use non-GitHub sources.
 
 The `prefetch-data` job has already fetched releases and issues from all
 24 monitored repositories for the last 24 hours. The data is stored in
-`/tmp/gh-aw/agent/daily-digest-cache.json`.
+`${{ github.workspace }}/.aw/prefetch/daily-digest-cache.json`.
 
 Start with the compact summary and coverage metrics, not the full cache:
 
 ```
-cat /tmp/gh-aw/agent/daily-digest-metrics.json
-cat /tmp/gh-aw/agent/daily-digest-summary.json
+cat "${{ github.workspace }}/.aw/prefetch/daily-digest-metrics.json"
+cat "${{ github.workspace }}/.aw/prefetch/daily-digest-summary.json"
 ```
 
-Only inspect `/tmp/gh-aw/agent/daily-digest-cache.json` selectively with
+Only inspect `${{ github.workspace }}/.aw/prefetch/daily-digest-cache.json` selectively with
 `python3` after you have identified promising candidates from the summary.
 Do not dump the full cache to the conversation unless `cache_bytes` is below
 120000. Prefer targeted extraction by repository, item type, and index.
@@ -379,7 +385,7 @@ The cache JSON has this structure:
 Also read the coverage metrics:
 
 ```
-cat /tmp/gh-aw/agent/daily-digest-metrics.json
+cat "${{ github.workspace }}/.aw/prefetch/daily-digest-metrics.json"
 ```
 
 The metrics JSON includes `cache_bytes`, `summary_bytes`, and
