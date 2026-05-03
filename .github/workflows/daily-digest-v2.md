@@ -35,7 +35,7 @@ jobs:
       contents: read
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      PREFETCH_DIR: ${{ runner.temp }}/daily-digest-prefetch
+      PREFETCH_DIR: /tmp/daily-digest-prefetch
     steps:
       - name: Create output directory
         run: mkdir -p "${PREFETCH_DIR}"
@@ -484,10 +484,12 @@ Output rules:
 - When publishing, call the safe-output tools directly by name: `create_issue`,
   `add_comment`, and `noop`. Do not refer to them through a `functions.` namespace
   or any other wrapper.
-- After creating the issue, add exactly one issue comment containing a
-  plain-text mention: @doughgle
-- Because this workflow runs on schedule/dispatch (no triggering issue), for
-  `add_comment` you MUST set `issue_number` to the issue number returned by the
-  same-run `create_issue` output.
-- Do NOT provide `item_number` for this workflow.
+- For the qualifying-items flow, use a temporary issue id so the follow-up
+  comment can target the issue created earlier in the same run.
+- Call `create_issue` with `temporary_id: "aw_digest_issue"` (or another
+  `aw_`-prefixed id you choose for this run).
+- Then call `add_comment` with `item_number: "aw_digest_issue"` and a body that
+  contains exactly this plain-text mention: @doughgle
+- Do not use `issue_number` for `add_comment` in this workflow; the safe-output
+  schema expects `item_number`.
 - Do not wrap the mention in quotes, backticks, or code blocks.
